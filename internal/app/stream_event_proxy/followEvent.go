@@ -11,33 +11,29 @@ import (
 )
 
 type FollowEvent struct {
-	publisher     *EventPublisher
+	client    *helix.Client
+	publisher *EventPublisher
+
+	subscription  *helix.EventSubSubscriptionsResponse
+	broadcasterId string
+	webhookUrl    string
 	webhookSecret string
 }
 
 func NewFollowEvent(broadcasterId string, serviceUrl string, client *helix.Client, publisher *EventPublisher) *FollowEvent {
-	webhookSecret := generateWebhookSecret()
-
-	_, err := client.CreateEventSubSubscription(&helix.EventSubSubscription{
-		Type:    helix.EventSubTypeChannelFollow,
-		Version: "1",
-		Condition: helix.EventSubCondition{
-			BroadcasterUserID: broadcasterId,
-		},
-		Transport: helix.EventSubTransport{
-			Method:   "webhook",
-			Callback: serviceUrl + "/follow",
-			Secret:   webhookSecret,
-		},
-	})
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	return &FollowEvent{
+	var followEvent = &FollowEvent{
+		client:        client,
 		publisher:     publisher,
-		webhookSecret: webhookSecret,
+		broadcasterId: broadcasterId,
+		webhookSecret: generateWebhookSecret(),
+		webhookUrl:    serviceUrl + "/follow",
 	}
+
+	publisher.AddConnectionObserver(func() {
+		followEvent.createEventSubscription()
+	})
+
+	return followEvent
 }
 
 func (f *FollowEvent) ServeHTTP(w http.ResponseWriter, r *http.Request) {
@@ -81,4 +77,24 @@ func (f *FollowEvent) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	log.Printf("got follow webhook: %s follows %s\n", followEvent.UserName, followEvent.BroadcasterUserName)
 	w.WriteHeader(200)
 	w.Write([]byte("ok"))
+}
+
+func (f *FollowEvent) createEventSubscription() {
+	sub, err := f.client.CreateEventSubSubscription(&helix.EventSubSubscription{
+		Type:    helix.EventSubTypeChannelFollow,
+		Version: "1",
+		Condition: helix.EventSubCondition{
+			BroadcasterUserID: f.broadcasterId,
+		},
+		Transport: helix.EventSubTransport{
+			Method:   "webhook",
+			Callback: f.webhookUrl,
+			Secret:   f.webhookSecret,
+		},
+	})
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	f.subscription = sub
 }

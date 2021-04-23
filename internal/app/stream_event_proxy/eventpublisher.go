@@ -11,8 +11,9 @@ import (
 type EventPublisher struct {
 	upgrader *websocket.Upgrader
 
-	connections map[*websocket.Conn]bool
-	events      chan *event
+	connections         map[*websocket.Conn]bool
+	connectionObservers []func()
+	events              chan *event
 }
 
 func NewEventPublisher() *EventPublisher {
@@ -56,6 +57,19 @@ func (e *EventPublisher) PublishEvent(event *event) {
 	e.events <- event
 }
 
+func (e *EventPublisher) AddConnection(conn *websocket.Conn) {
+	e.connections[conn] = true
+	for _, observer := range e.connectionObservers {
+		observer()
+	}
+
+	e.connectionObservers = nil
+}
+
+func (e *EventPublisher) AddConnectionObserver(observer func()) {
+	e.connectionObservers = append(e.connectionObservers, observer)
+}
+
 func (e *EventPublisher) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	conn, err := e.upgrader.Upgrade(w, r, nil) // error ignored for sake of simplicity
 	if err != nil {
@@ -65,6 +79,6 @@ func (e *EventPublisher) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 	conn.SetPongHandler(func(string) error { conn.SetReadDeadline(time.Now().Add(60 * time.Second)); return nil })
 
-	e.connections[conn] = true
+	e.AddConnection(conn)
 	log.Println("client websocket connection created")
 }
