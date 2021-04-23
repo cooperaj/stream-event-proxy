@@ -33,6 +33,14 @@ export default {
   created() {
     console.log('Starting connection to WebSocket Server')
     this.connect()
+
+    // loading images to stop FOC when receiving the first alert
+    let torso = new Image()
+    torso.src = require('../assets/Torso.png')
+    let upperBody = new Image()
+    upperBody.src = require('../assets/UpperBody.png')
+    let box = new Image()
+    box.src = require('../assets/Box.png')
   },
 
   methods: {
@@ -46,7 +54,6 @@ export default {
         if (follow.type == 'follow') {
           this.follower = follow.data.user_name
           this.show = true
-          console.log(follow)
         }
       }
 
