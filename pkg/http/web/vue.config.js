@@ -7,7 +7,7 @@
     writeToDisk: true,
     proxy: {
       '/': {
-        target: 'http://localhost:5005',
+        target: 'http://localhost:5000',
         ws: true,
       },
     }
