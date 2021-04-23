@@ -45,7 +45,7 @@ export default {
 
   methods: {
     connect() {
-      var protocol = document.location.protocol == 'https' ? 'wss' : 'ws'
+      var protocol = document.location.protocol == 'https:' ? 'wss' : 'ws'
       this.connection = new WebSocket(protocol + '://' + document.location.hostname + ':' + document.location.port + '/ws')
 
       this.connection.onmessage = (event) => {
