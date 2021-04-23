@@ -70,6 +70,7 @@ export default {
 .follower {
   font-family: 'Russo One';
   width: 782px;
+  margin: 0 auto;
 }
 
 .follower__cayde, .follower__caydeUpper, .follower__box {
