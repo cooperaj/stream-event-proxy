@@ -8,10 +8,43 @@ import (
 	"github.com/gorilla/websocket"
 )
 
+const (
+	// Time allowed to write a message to the peer.
+	writeWait = 10 * time.Second
+
+	// Time allowed to read the next pong message from the peer.
+	pongWait = 60 * time.Second
+
+	// Send pings to peer with this period. Must be less than pongWait.
+	pingPeriod = (pongWait * 9) / 10
+)
+
+type conn struct {
+	ws *websocket.Conn
+}
+
+func (c *conn) keepalive() {
+	ticker := time.NewTicker(pingPeriod)
+	defer func() {
+		ticker.Stop()
+		c.ws.Close()
+	}()
+
+	for {
+		select {
+		case <-ticker.C:
+			c.ws.SetWriteDeadline(time.Now().Add(writeWait))
+			if err := c.ws.WriteMessage(websocket.PingMessage, []byte{}); err != nil {
+				return
+			}
+		}
+	}
+}
+
 type EventPublisher struct {
 	upgrader *websocket.Upgrader
 
-	connections         map[*websocket.Conn]bool
+	connections         map[*conn]bool
 	connectionObservers []func()
 	events              chan *event
 }
@@ -27,7 +60,7 @@ func NewEventPublisher() *EventPublisher {
 		},
 	}
 
-	publisher.connections = make(map[*websocket.Conn]bool)
+	publisher.connections = make(map[*conn]bool)
 	publisher.events = make(chan *event, 20)
 
 	return publisher
@@ -38,14 +71,14 @@ func (e *EventPublisher) Run() {
 		select {
 		case event := <-e.events:
 			for client := range e.connections {
-				if err := client.WriteJSON(event); err != nil {
+				if err := client.ws.WriteJSON(event); err != nil {
 					log.Println("Websocket failed to write")
 
 					if _, ok := e.connections[client]; ok {
 						delete(e.connections, client)
 					}
 
-					client.Close()
+					client.ws.Close()
 				}
 			}
 			log.Println("wrote \"" + event.Type + "\" event to clients sockets")
@@ -57,12 +90,17 @@ func (e *EventPublisher) PublishEvent(event *event) {
 	e.events <- event
 }
 
-func (e *EventPublisher) AddConnection(conn *websocket.Conn) {
-	e.connections[conn] = true
+func (e *EventPublisher) AddConnection(ws *websocket.Conn) {
+	c := &conn{
+		ws: ws,
+	}
+
+	e.connections[c] = true
+	go c.keepalive()
+
 	for _, observer := range e.connectionObservers {
 		observer()
 	}
-
 	e.connectionObservers = nil
 }
 
@@ -77,7 +115,8 @@ func (e *EventPublisher) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	conn.SetPongHandler(func(string) error { conn.SetReadDeadline(time.Now().Add(60 * time.Second)); return nil })
+	conn.SetReadDeadline(time.Now().Add(pongWait))
+	conn.SetPongHandler(func(string) error { conn.SetReadDeadline(time.Now().Add(pongWait)); return nil })
 
 	e.AddConnection(conn)
 	log.Println("client websocket connection created")
