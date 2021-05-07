@@ -1,8 +1,9 @@
 <template>
-  <transition name="bounce">
+  <transition name="fly-by">
     <div 
         v-if="show" 
         v-on:animationend="show = false"
+        v-on:animationcancel="show = false"
         class="follower"
     >
       <div class="follower__cayde">
@@ -44,6 +45,12 @@ export default {
   },
 
   methods: {
+    playAudio() {
+      var audio = new Audio('/audio/youre_my_favourite.ogg')
+      setTimeout(() => {
+        audio.play()
+      }, 1000);
+    },
     connect() {
       var protocol = document.location.protocol == 'https:' ? 'wss' : 'ws'
       this.connection = new WebSocket(protocol + '://' + document.location.hostname + ':' + document.location.port + '/ws')
@@ -54,6 +61,7 @@ export default {
         if (follow.type == 'follow') {
           this.follower = follow.data.user_name
           this.show = true
+          this.playAudio()
         }
       }
 
@@ -107,13 +115,13 @@ export default {
   margin: 0.5rem 0;
 }
 
-.bounce-enter-active {
+.fly-by-enter-active {
   animation: slide-through 6s;
 }
-.bounce-enter-active .follower__caydeUpper, .bounce-enter-active .follower__cayde {
+.fly-by-enter-active .follower__caydeUpper, .fly-by-enter-active .follower__cayde {
   animation: cayde-slide-right 6s linear;
 }
-.bounce-leave-active {
+.fly-by-leave-active {
   opacity: 0;
 }
 
