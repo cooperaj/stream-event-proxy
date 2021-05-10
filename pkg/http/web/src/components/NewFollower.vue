@@ -2,8 +2,7 @@
   <transition name="fly-by">
     <div 
         v-if="show" 
-        v-on:animationend="show = false"
-        v-on:animationcancel="show = false"
+        v-on:animationend="finished()"
         class="follower"
     >
       <div class="follower__cayde">
@@ -11,7 +10,7 @@
       </div>
       <div class="follower__box">
         <h1>Hey, a new follower... that's cute!</h1>
-        <h2>{{ follower }}</h2>
+        <h2>{{ followerData.name }}</h2>
       </div>
       <div class="follower__caydeUpper">
         <img src="../assets/UpperBody.png">
@@ -22,19 +21,24 @@
 
 <script>
 export default {
+  props: {
+    followerData: Object
+  },
+
   data() {
     return {
-      connection: null,
-      connectionTimeout: 250,
       show: false,
-      follower: 'testFollower'
+    }
+  },
+
+  watch: {
+    followerData: function() {
+      this.show = true
+      this.playAudio()
     }
   },
 
   created() {
-    console.log('Starting connection to WebSocket Server')
-    this.connect()
-
     // loading images to stop FOC when receiving the first alert
     let torso = new Image()
     torso.src = require('../assets/Torso.png')
@@ -51,35 +55,16 @@ export default {
         audio.play()
       }, 1000);
     },
-    connect() {
-      var protocol = document.location.protocol == 'https:' ? 'wss' : 'ws'
-      this.connection = new WebSocket(protocol + '://' + document.location.hostname + ':' + document.location.port + '/ws')
 
-      this.connection.onmessage = (event) => {
-        var follow = JSON.parse(event.data);
-
-        if (follow.type == 'follow') {
-          this.follower = follow.data.user_name
-          this.show = true
-          this.playAudio()
-        }
-      }
-
-      this.connection.onopen = () => {
-        console.log('Successfully connected to the websocket server...')
-        this.connectionTimeout = 250
-      }
-
-      this.connection.onclose = (event) => {
-        console.log('Socket is closed. Reconnect will be attempted in ' + this.connectionTimeout/1000 + ' seconds.', event.reason);
-        setTimeout(this.connect, Math.min(10000, this.connectionTimeout += this.connectionTimeout))
-      }
-    },
+    finished() {
+      this.show = false
+      this.$store.dispatch('eventResolved')
+    }
   }
 }
 </script>
 
-<style>
+<style scoped>
 @import url('https://fonts.googleapis.com/css?family=Russo+One');
 
 .follower {

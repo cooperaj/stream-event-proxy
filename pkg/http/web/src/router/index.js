@@ -1,5 +1,6 @@
 import VueRouter from 'vue-router';
 import Home from '@/views/Home.vue'
+import Alerts from '@/views/Alerts.vue';
 
 const routes = [
   {
@@ -8,12 +9,16 @@ const routes = [
     component: Home
   },
   {
-    path: '/new-follower',
-    name: 'New Follower',
-    // route level code-splitting
-    // this generates a separate chunk (about.[hash].js) for this route
-    // which is lazy-loaded when the route is visited.
-    component: () => import(/* webpackChunkName: "newFollower" */ '../views/NewFollower.vue')
+    path: '/alerts/:types?',
+    name: 'Alerts Display',
+    component: Alerts,
+    props: (route) => { 
+      if (route.params.types != undefined ) {
+        return { types: route.params.types.split(',') }
+      }
+
+      return { types: [] }
+    }
   }
 ]
 
