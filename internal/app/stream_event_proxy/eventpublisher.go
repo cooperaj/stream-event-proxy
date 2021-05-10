@@ -35,6 +35,7 @@ func (c *conn) keepalive() {
 		case <-ticker.C:
 			c.ws.SetWriteDeadline(time.Now().Add(writeWait))
 			if err := c.ws.WriteMessage(websocket.PingMessage, []byte{}); err != nil {
+				log.Printf("failed to write ping message to websocket. err: %v\n", err)
 				return
 			}
 		}
@@ -70,18 +71,21 @@ func (e *EventPublisher) Run() {
 	for {
 		select {
 		case event := <-e.events:
+			var count = len(e.connections)
 			for client := range e.connections {
+				client.ws.SetWriteDeadline(time.Now().Add(writeWait))
 				if err := client.ws.WriteJSON(event); err != nil {
-					log.Println("Websocket failed to write")
+					count--
 
 					if _, ok := e.connections[client]; ok {
 						delete(e.connections, client)
 					}
 
 					client.ws.Close()
+					log.Printf("websocket failed to write, removing. err: %v\n", err)
 				}
 			}
-			log.Println("wrote \"" + event.Type + "\" event to clients sockets")
+			log.Printf("wrote %s event to %d client socket/s\n", event.Type, count)
 		}
 	}
 }
@@ -115,6 +119,7 @@ func (e *EventPublisher) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	conn.SetReadLimit(512)
 	conn.SetReadDeadline(time.Now().Add(pongWait))
 	conn.SetPongHandler(func(string) error { conn.SetReadDeadline(time.Now().Add(pongWait)); return nil })
 
