@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"log"
 	"math/rand"
+	"strings"
 	"time"
 
 	"github.com/nicklaw5/helix"
@@ -49,5 +50,26 @@ func NewClient(config *Config) *helix.Client {
 	// Set the access token on the client
 	client.SetAppAccessToken(tokenResp.Data.AccessToken)
 
+	// Ensure that existing subscriptions for this client are removed before adding new
+	cleanupSubscriptions(client, config.ServiceUrl, config.BroadcasterId)
+
 	return client
+}
+
+func cleanupSubscriptions(client *helix.Client, serviceUrl string, broadcasterId string) {
+	subs, err := client.GetEventSubSubscriptions(&helix.EventSubSubscriptionsParams{})
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	var count int = 0
+	for _, sub := range subs.Data.EventSubSubscriptions {
+		if strings.HasPrefix(sub.Transport.Callback, serviceUrl) && sub.Condition.BroadcasterUserID == broadcasterId {
+			client.RemoveEventSubSubscription(sub.ID)
+			count++
+		}
+	}
+	if count > 0 {
+		log.Printf("removed %d prior subscriptions for user %s", count, broadcasterId)
+	}
 }
