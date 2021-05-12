@@ -64,48 +64,48 @@ export default {
 }
 </script>
 
-<style scoped>
+<style lang="scss" scoped>
 @import url('https://fonts.googleapis.com/css?family=Russo+One');
 
 .follower {
   font-family: 'Russo One';
   width: 782px;
   margin: 0 auto;
-}
 
-.follower__cayde, .follower__caydeUpper, .follower__box {
-  position: absolute;
-}
+  &__cayde, &__caydeUpper {
+    position: absolute;
+    transform: translateX(-90px);
+  }
 
-.follower__cayde, .follower__caydeUpper {
-  transform: translateX(-90px)
-}
+  &__box {
+    position: absolute;
+    background: url('../assets/Box.png');
+    margin-top: 388px;
+    width: 782px;
+    height: 202px;
+    color: white;
+    text-align: center;
 
-.follower__box {
-  background: url('../assets/Box.png');
-  margin-top: 388px;
-  width: 782px;
-  height: 202px;
-  color: white;
-  text-align: center;
-}
+    h1 {
+      font-size: 2.5rem;
+      margin: 2.5rem 0.5rem 0rem;
+    }
 
-.follower__box h1 {
-  font-size: 2.5rem;
-  margin: 2.5rem 0.5rem 0rem;
-}
-
-.follower__box h2 {
-  font-size: 4rem;
-  margin: 0.5rem 0;
+    h2 {
+      font-size: 4rem;
+      margin: 0.5rem 0;
+    }
+  }
 }
 
 .fly-by-enter-active {
   animation: slide-through 6s;
+
+  .follower__caydeUpper, .follower__cayde {
+    animation: cayde-slide-right 6s linear;
+  }
 }
-.fly-by-enter-active .follower__caydeUpper, .fly-by-enter-active .follower__cayde {
-  animation: cayde-slide-right 6s linear;
-}
+
 .fly-by-leave-active {
   opacity: 0;
 }

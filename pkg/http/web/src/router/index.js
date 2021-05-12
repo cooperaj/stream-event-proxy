@@ -5,12 +5,12 @@ import Alerts from '@/views/Alerts.vue';
 const routes = [
   {
     path: '/',
-    name: 'Home',
+    name: 'home',
     component: Home
   },
   {
     path: '/alerts/:types?',
-    name: 'Alerts Display',
+    name: 'alerts-display',
     component: Alerts,
     props: (route) => { 
       if (route.params.types != undefined ) {
