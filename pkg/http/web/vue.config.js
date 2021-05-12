@@ -1,7 +1,7 @@
 /**
  * @type {import('@vue/cli-service').ProjectOptions}
  */
- module.exports = {
+module.exports = {
   outputDir: '../../../web/assets',
   devServer: {
     writeToDisk: true,
@@ -20,4 +20,4 @@
     config.plugins.delete('preload')
     config.plugins.delete('prefetch')
   }
- }
+}
