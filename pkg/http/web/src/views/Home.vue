@@ -3,9 +3,9 @@
     <h1>Stream Alert Proxy</h1>
     <form id="alert-choice" class="pure-form">
       <button v-on:click="showAlertDisplay" :disabled="checkedAlerts.length == 0" class="pure-button">Open selected Alerts display</button>
-      <label for="newFollower" class="pure-checkbox">
+      <label for="newFollower" class="pure-checkbox pure-input-1-2">
         <input id="newFollower" type="checkbox" value="newFollower" v-model="checkedAlerts" /> New Follower</label>
-      <label for="newSubscriber" class="pure-checkbox">
+      <label for="newSubscriber" class="pure-checkbox pure-input-1-2">
         <input id="newSubscriber" type="checkbox" value="newSubscriber" v-model="checkedAlerts" disabled /> New Subscriber</label>
     </form>
   </div>
