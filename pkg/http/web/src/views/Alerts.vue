@@ -5,6 +5,9 @@
 </template>
 
 <script>
+
+import { mapState } from 'vuex';
+
 export default {
   props: {
     types: Array
@@ -13,18 +16,10 @@ export default {
   data() {
     return {
       followerData: {},
-      currentEvent: null
     }
   },
 
-  created() {
-    this.unsubscribe = this.$store.subscribe((mutation, state) => {
-      if (mutation.type === 'SOCKET_ONMESSAGE') {
-        this.currentEvent = state.currentEvent
-        this.currentEvent.created_at = Date.now()
-      }
-    });
-  },
+  computed: mapState(['currentEvent']),
 
   beforeDestroy() {
     this.unsubscribe();

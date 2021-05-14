@@ -9,7 +9,8 @@ export default new Vuex.Store({
       isConnected: false,
       reconnectError: false,
     },
-    currentEvent: null
+    currentEvent: null,
+    pendingEvents: []
   },
   mutations: {
     SOCKET_ONOPEN (state, event)  {
@@ -24,7 +25,10 @@ export default new Vuex.Store({
     },
     // default handler called for all methods
     SOCKET_ONMESSAGE (state, message)  {
-      state.currentEvent = message
+      state.pendingEvents.push(message)
+      if (state.currentEvent == null) {
+        state.currentEvent = state.pendingEvents.shift()
+      }
     },
     // mutations for reconnect methods
     SOCKET_RECONNECT(state, count) {
@@ -35,11 +39,16 @@ export default new Vuex.Store({
     },
     EVENT_RESOLVED(state) {
       state.currentEvent = null
+      if (state.pendingEvents.length > 0) {
+        state.currentEvent = state.pendingEvents.shift()
+      }
     }
   },
   actions: {
-    eventResolved(context) {
-      context.commit('EVENT_RESOLVED')
+    eventResolved({commit}) {
+      setTimeout(() => {
+        commit('EVENT_RESOLVED')
+      }, 1000) // wait a second to before (possibly) queuing the next event
     }
   },
 })
