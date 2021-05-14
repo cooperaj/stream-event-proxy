@@ -1,6 +1,6 @@
 <template>
   <div id="home">
-    <h1>Stream Alert Proxy</h1>
+    <h1>Stream Alerts</h1>
     <form id="alert-choice" class="pure-form">
       <button v-on:click="showAlertDisplay" :disabled="checkedAlerts.length == 0" class="pure-button">Open selected Alerts display</button>
       <label for="newFollower" class="pure-checkbox pure-input-1-2">
