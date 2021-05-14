@@ -2,7 +2,7 @@
   <transition name="fly-by">
     <div 
         v-if="show" 
-        v-on:animationend="finished()"
+        v-on:animationend="finished"
         class="follower"
     >
       <div class="follower__cayde">
@@ -56,9 +56,12 @@ export default {
       }, 1000);
     },
 
-    finished() {
-      this.show = false
-      this.$store.dispatch('eventResolved')
+    finished(animationEvent) {
+      // we animate 3 elements so make sure to just listen to the finished event of one.
+      if (animationEvent.srcElement.classList.contains('follower')) {
+        this.show = false
+        this.$store.dispatch('eventResolved')
+      }
     }
   }
 }
